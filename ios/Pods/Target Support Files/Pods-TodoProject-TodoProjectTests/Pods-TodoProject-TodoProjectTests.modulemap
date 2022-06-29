@@ -1,0 +1,6 @@
+module Pods_TodoProject_TodoProjectTests {
+  umbrella header "Pods-TodoProject-TodoProjectTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
