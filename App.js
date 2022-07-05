@@ -1,4 +1,4 @@
-import React, { useState, Component, useRef, forwardRef } from "react";
+import React, { useState, useContext, useRef, forwardRef } from "react";
 import {
   View,
   Text,
@@ -14,47 +14,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { enableScreens } from "react-native-screens";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import AwesomeButton from "react-native-really-awesome-button";
 
 enableScreens();
 
+const DataContext = React.createContext(null);
+const SelectedItemContext = React.createContext(null);
 const Stack = createNativeStackNavigator();
 export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: "", headerShown: false }}
-        />
-        <Stack.Screen
-          name="Content"
-          component={ContentScreen}
-          options={{
-            title: "",
-            headerShown: true,
-            headerTransparent: true,
-            headerTintColor: "white",
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-
-const HomeScreen = ({ navigation }) => {
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.pageTitle}>Let's get it done!</Text>
-      <ListHomeContent navigation={navigation} />
-    </SafeAreaView>
-  );
-};
-
-const ListHomeContent = (props) => {
-  const [selectedID, setSelectedID] = useState("");
-  const [selectedItem, setSelectedItem] = useState(null);
+  //const [selectedID, setSelectedItems] = useState("");
   const [data, setData] = useState([
     {
       id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
@@ -78,8 +45,40 @@ const ListHomeContent = (props) => {
       items: [{ id: "5", title: "test", done: false }],
     },
   ]);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  return (
+    <DataContext.Provider value={[data, setData]}>
+      <SelectedItemContext.Provider value={[selectedItem, setSelectedItem]}>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ title: "", headerShown: false }}
+            />
+            <Stack.Screen
+              name="Content"
+              component={ContentScreen}
+              options={{
+                title: "",
+                headerShown: true,
+                headerTransparent: true,
+                headerTintColor: "white",
+              }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SelectedItemContext.Provider>
+    </DataContext.Provider>
+  );
+}
+
+const HomeScreen = ({ navigation, route }) => {
+  const [data, setData] = useContext(DataContext);
+  const [selectedItem, setSelectedItem] = useContext(SelectedItemContext);
   const renderItem = ({ item }) => {
-    var completedCount = item.items.filter((item) => item.done === true).length;
+    var completedCount = item.items.filter(fItem => fItem.done === true).length;
     var subtitleContent = completedCount + "/" + item.items.length;
     return (
       <Item
@@ -87,82 +86,86 @@ const ListHomeContent = (props) => {
         title={item.title}
         subtitle={subtitleContent}
         onPress={() => {
-          setSelectedID(item.id);
           setSelectedItem(item);
-          props.navigation.navigate("Content", {
-            item: item,
-            func: console.log("test"),
-          });
+          navigation.navigate("Content");
         }}
       />
     );
   };
   return (
-    <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      extraData={selectedID}
-    />
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.pageTitle}>Let's get it done!</Text>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        extraData={data.id}
+      />
+    </SafeAreaView>
   );
 };
 const ContentScreen = (props) => {
-  return (
-    <ListSpecificContent
-      route={props.route}
-      func={props.func}
-    />
-  );
-};
+  const [data, setData] = useContext(DataContext);
+  const [selectedItem, setSelectedItem] = useContext(SelectedItemContext);
 
-const ListSpecificContent = (props) => {
-  console.log(props.route.params.item.items);
-  const [selectedIDs, setSelectedID] = useState([]);
+  // const addTaskItem = (item) => {
+  //   if (!checkTaskItem(item)) setData((oldArray) => [...oldArray, item]);
+  // };
+  // const removeTaskItem = (item) => {
+  //   if (checkTaskItem(item)) {
+  //     setData(data.filter((value) => value !== item));
+  //   }
+  // };
 
-  const addSelectedID = (id) => {
-    setSelectedID((oldArray) => [...oldArray, id]);
+  const updateData = (task) => {
+    const localData = [...data];
+    var itemIndex = localData.findIndex(
+      (value) => value.id === selectedItem.id
+    );
+    localData[itemIndex] = task;
+    setData(localData);
   };
-  const removeSelectedID = (id) => {
-    if (selectedIDs.length > 0) {
-      setSelectedID(selectedIDs.filter((item) => item !== id));
-    }
+  
+  const checkTaskItem = (item) => {
+    var dataIndex = data.findIndex((value) => value.id === item.id);
+    if (dataIndex === -1) return false;
+    else return true;
   };
 
-  function toggleSelectedID(id) {
-    if (selectedIDs.includes(id)) {
-      removeSelectedID(id);
-      // return true;
-    } else {
-      addSelectedID(id);
-      // return false;
+  function toggleSelectedTask(item) {
+    // var itemRef = pParams.item;
+    for (var i = 0; i < selectedItem.items.length; i++) {
+      if (selectedItem.items[i].id == item.id) {
+        selectedItem.items[i].done = !selectedItem.items[i].done;
+        console.log(selectedItem.items[i]);
+        updateData(selectedItem);
+      }
     }
   }
-  function checkSelectedID(id) {
-    return selectedIDs.includes(id);
+  function checkSelectedTask(item) {
+    return selectedItem.items.find((value) => value.id === item.id).done;
   }
-  const renderSpecificItem = ({ item }) => {
+  const renderSpecificTask = ({ item }) => {
     return (
       <ToggleItem
         item={item}
         title={item.title}
         subtitle=""
         onPress={() => {
-          toggleSelectedID(item.id);
+          toggleSelectedTask(item);
         }}
-        isDone={checkSelectedID(item.id)}
+        isDone={checkSelectedTask(item)}
       />
     );
   };
   return (
     <View style={styles.contentContainer}>
       <Text style={styles.pageTitle}>
-        {props.route.params.item != null ? props.route.params.item.title : ""}
+        {selectedItem != null ? selectedItem.title : ""}
       </Text>
       <FlatList
-        data={
-          props.route.params.item != null ? props.route.params.item.items : null
-        }
-        renderItem={renderSpecificItem}
+        data={selectedItem != null ? selectedItem.items : null}
+        renderItem={renderSpecificTask}
       />
     </View>
   );
