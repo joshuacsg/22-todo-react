@@ -8,11 +8,9 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Button,
-  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import * as styles from "./styles.js";
-import { ModalVisibleContext } from "./global.js";
 
 export const FloatingActionButton = ({ onPress }) => (
   <TouchableOpacity style={styles.floatingActionButton} onPress={onPress}>
@@ -35,7 +33,9 @@ export const Item = ({ title, subtitle, onPress, onLongPress }) => (
         justifyContent: "space-between",
       }}
     >
-      <Text style={styles.listTitle}>{title}</Text>
+      <View style={{ flex: 0.8 }}>
+        <Text style={styles.listTitle}>{title}</Text>
+      </View>
       <Text style={styles.listSubtitle}>{subtitle}</Text>
     </View>
   </TouchableOpacity>
@@ -46,7 +46,7 @@ export const ToggleItem = ({
   onPress,
   onLongPress,
   isDone,
-  onPressIn
+  onPressIn,
 }) => (
   <TouchableOpacity
     onPress={onPress}
@@ -87,6 +87,7 @@ export const PopupModal = ({
   modalVisible,
   setModalVisible,
   output,
+  showAction,
   actionAction,
 }) => {
   const [modalInput, setModalInput] = useState("");
@@ -149,7 +150,7 @@ export const PopupModal = ({
             }}
           >
             <Text style={styles.modalTitle}>{modalTitle}</Text>
-            {actionAction != null ? (
+            {showAction ? (
               <TouchableOpacity onPress={actionAction}>
                 <Icon
                   style={{ margin: 8, marginRight: 16 }}

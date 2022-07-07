@@ -1,24 +1,25 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   TextInput,
-  Modal,
-  Button,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import * as styles from "../styles.js";
 import { FloatingActionButton, ToggleItem, PopupModal } from "../components.js";
-import { DataContext, SelectedItemContext } from "../global.js";
-import uuid from "react-native-uuid";
+import {
+  SelectedItemContext,
+  TodosContext,
+  TasksContext,
+  baseUrl,
+} from "../global.js";
+import axios from "axios";
 
 export const ContentScreen = ({ navigation, route }) => {
-  const [data, setData] = useContext(DataContext);
+  const [tasks, setTasks] = useContext(TasksContext);
+  const [thisListName, setThisListName] = useState("");
   const [selectedItem, setSelectedItem] = useContext(SelectedItemContext);
   const [selectedTask, setSelectedTask] = useState();
   const [taskModalVisible, setTaskModalVisible] = useState(false);
@@ -26,111 +27,135 @@ export const ContentScreen = ({ navigation, route }) => {
     title: "",
     placeholder: "",
     output: null,
-    delete:null
+    showAction: false,
   });
 
-  const updateTitle = (title) => {
-    const localData = [...data];
-    var itemIndex = localData.findIndex(
-      (value) => value.id === selectedItem.id
-    );
-    localData[itemIndex].title = title;
-    setData(localData);
-  };
-  const updateTask = (task) => {
-    const localData = [...data];
-    var itemIndex = localData.findIndex(
-      (value) => value.id === selectedItem.id
-    );
-    localData[itemIndex] = task;
-    setData(localData);
+  const updateName = (name) => {
+    const payload = {
+      name: name,
+    };
+    axios
+      .patch(`${baseUrl}/api/todo-lists/${selectedItem.id}`, payload)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   };
 
-  function toggleSelectedTask(item) {
-    for (var i = 0; i < selectedItem.items.length; i++) {
-      if (selectedItem.items[i].id == item.id) {
-        selectedItem.items[i].done = !selectedItem.items[i].done;
-        updateTask(selectedItem);
-      }
-    }
+  function toggleSelectedTask() {
+    const payload = {
+      is_done: !selectedTask.is_done,
+    };
+    axios
+      .patch(`${baseUrl}/api/todos/${selectedTask.id}`, payload)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
-  function editSelectedTask(newName) {
-    for (var i = 0; i < selectedItem.items.length; i++) {
-      if (selectedItem.items[i].id === selectedTask.id) {
-        selectedItem.items[i].title = newName;
-        updateTask(selectedItem);
-      }
-    }
+  function editSelectedTask(description) {
+    const payload = {
+      description: description,
+    };
+    axios
+      .patch(`${baseUrl}/api/todos/${selectedTask.id}`, payload)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
-  function addNewTask(taskName) {
-    const localData = [...data];
-    var itemIndex = localData.findIndex(
-      (value) => value.id === selectedItem.id
-    );
-    const localTasks = [
-      ...localData[itemIndex].items,
-      {
-        done: false,
-        id: uuid.v4(),
-        title: taskName,
-      },
-    ];
-    localData[itemIndex].items = localTasks;
-    updateTask(localData);
+  function addNewTask(description) {
+    console.log("addNewTask");
+    const generatedID = Math.floor(Math.random() * 99999) + 1000;
+    const payload = {
+      id: generatedID,
+      description: description,
+      is_done: false,
+      todo_list_id: selectedItem.id,
+    };
+    axios
+      .post(`${baseUrl}/api/todos`, payload)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
   function deleteSelectedTask() {
-    const localTasks = [...selectedItem.items];
-    console.log(localTasks, " localData");
-    console.log(selectedTask.id, " selectedTask.id");
-    const filteredTasks = localTasks.filter((fItem)=> fItem.id !== selectedTask.id);
-
-    const localData = [...data];
-    var itemIndex = localData.findIndex(
-      (value) => value.id === selectedItem.id
-    );
-    localData[itemIndex].items = filteredTasks;
-    setData(localData);
+    axios
+      .delete(`${baseUrl}/api/todos/${selectedTask.id}`)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
 
   function deleteTodoList() {
-    const localData = [...data];
-    const filteredData = localData.filter(
-      (fItem) => fItem.id !== selectedItem.id
-    );
-    setData(filteredData);
+    axios
+      .delete(`${baseUrl}/api/todo-lists/${selectedItem.id}`)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
   function checkSelectedTask(item) {
-    return selectedItem.items.find((value) => value.id === item.id).done;
+    return item.is_done;
   }
   const renderSpecificTask = ({ item }) => {
     return (
       <ToggleItem
         item={item}
-        title={item.title != null ? item.title : ""}
+        title={item.description != null ? item.description : ""}
         subtitle=""
         onPress={() => {
-          
-          toggleSelectedTask(item);
+          toggleSelectedTask();
         }}
-        onPressIn={()=>{setSelectedTask(item)}}
+        onPressIn={() => {
+          setSelectedTask(item);
+        }}
         onLongPress={() => {
           setTaskModalSettings({
             title: "Edit task",
             placeholder: "What's your task name",
-            output: editSelectedTask
+            output: editSelectedTask,
+            showAction:true
           });
           setTaskModalVisible(true);
         }}
         isDone={checkSelectedTask(item)}
+        key={item.key}
       />
     );
   };
   function RenderTaskList() {
-    if (selectedItem.items.length > 0) {
+    const taskList = tasks.filter(
+      (fItem) => fItem.todo_list_id === selectedItem.id
+    );
+    if (taskList.length > 0) {
       return (
         <FlatList
-          data={selectedItem != null ? selectedItem.items : null}
+          data={taskList}
           renderItem={renderSpecificTask}
+          keyExtractor={(item, index) => {
+            return index.toString();
+          }}
         />
       );
     } else {
@@ -169,8 +194,9 @@ export const ContentScreen = ({ navigation, route }) => {
         <View style={{ flex: 1 }}>
           <TextInput
             style={styles.pageTitleInput}
-            onChangeText={updateTitle}
-            value={selectedItem.title}
+            onChangeText={setThisListName}
+            onSubmitEditing={()=>{updateName(thisListName)}}
+            value={thisListName!=""?thisListName:selectedItem.name}
             placeholder="What's your to-do"
             keyboardType="default"
           />
@@ -192,6 +218,7 @@ export const ContentScreen = ({ navigation, route }) => {
         modalVisible={taskModalVisible}
         setModalVisible={setTaskModalVisible}
         output={taskModalSettings.output}
+        showAction={taskModalSettings.showAction}
         actionAction={() => {
           deleteSelectedTask();
           setTaskModalVisible(false);
@@ -204,6 +231,7 @@ export const ContentScreen = ({ navigation, route }) => {
             title: "Add a new task",
             placeholder: "What's your task name",
             output: addNewTask,
+            showAction:false
           });
           setTaskModalVisible(true);
         }}

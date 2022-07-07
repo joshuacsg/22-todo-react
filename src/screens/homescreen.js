@@ -2,30 +2,44 @@ import React, { useContext, useState } from "react";
 import { Text, SafeAreaView, FlatList } from "react-native";
 import * as styles from "../styles.js";
 import { FloatingActionButton, Item, PopupModal } from "../components.js";
-import { DataContext, SelectedItemContext } from "../global.js";
-import uuid from "react-native-uuid";
+import {
+  SelectedItemContext,
+  TodosContext,
+  TasksContext,
+  baseUrl,
+} from "../global.js";
+import axios from "axios";
 
 export const HomeScreen = ({ navigation, route }) => {
-  const [data, setData] = useContext(DataContext);
+  const [todos, setTodos] = useContext(TodosContext);
+  const [tasks, setTasks] = useContext(TasksContext);
   const [selectedItem, setSelectedItem] = useContext(SelectedItemContext);
   const [modalVisible, setModalVisible] = useState(false);
 
   function addTodoList(listName) {
-    const todoItem = { id: uuid.v4(), title: listName, items: [] };
-    const localData = [...data, todoItem];
-    setData(localData);
-    setSelectedItem(todoItem);
-    navigation.navigate("Content");
+    const generatedID = Math.floor(Math.random() * 99999) + 1000;
+    const item = { id: generatedID, name: listName };
+    axios
+      .post(`${baseUrl}/api/todo-lists`, item)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error.response.data);
+        alert(error.response.data);
+      });
   }
   const renderItem = ({ item }) => {
-    var completedCount = item.items.filter(
-      (fItem) => fItem.done === true
-    ).length;
-    var subtitleContent = completedCount + "/" + item.items.length;
+    var tCount = [...tasks].filter((fItem) => fItem.todo_list_id == item.id);
+    var cCount = tCount.filter((fItem) => fItem.is_done);
+    var subtitleContent =
+      tCount.length > 0 || cCount > 0
+        ? cCount.length + "/" + tCount.length
+        : "-";
     return (
       <Item
         item={item}
-        title={item.title != null ? item.title : ""}
+        title={item.name != null ? item.name : ""}
         subtitle={subtitleContent}
         onPress={() => {
           setSelectedItem(item);
@@ -38,10 +52,12 @@ export const HomeScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.pageTitle}>Let's get it done!</Text>
       <FlatList
-        data={data}
+        data={todos}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        extraData={data.id}
+        keyExtractor={(item, index) => {
+          return index.toString();
+        }}
+        extraData={todos.id}
       />
       <PopupModal
         modalTitle={"Add a new todo list"}
