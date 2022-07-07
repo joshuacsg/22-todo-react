@@ -5,11 +5,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: 56,
+    height: 56,
     position: "absolute",
     bottom: 24,
     right: 24,
-    height: 56,
     backgroundColor: "#264C63",
+    borderRadius: 100,
+  },
+  navbarActionButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    backgroundColor: "#ffffffaa",
     borderRadius: 100,
   },
   container: {
@@ -36,7 +44,7 @@ const styles = StyleSheet.create({
   pageTitleInput: {
     fontSize: 24,
     color: "#f1faee",
-    marginHorizontal: 16,
+    marginRight: 16,
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
@@ -54,6 +62,10 @@ const styles = StyleSheet.create({
   },
   listSubtitle: {
     fontSize: 16,
+    color: "#457b9d",
+  },
+  listDescription: {
+    fontSize: 12,
     color: "#457b9d",
   },
   item: {
@@ -108,6 +120,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     justifyContent: "flex-end",
+  },
+  modalTitle: {
+    fontSize: 20,
+    color: "#457b9d",
+    margin: 8,
+  },
+  modalInput: {
+    backgroundColor: "#fff",
+    textColor: "#457b9d",
+    padding: 8,
+    marginBottom: 16,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    borderBottomColor: "#457b9d",
+    borderBottomWidth:1,
+    fontSize: 16,
   },
 });
 

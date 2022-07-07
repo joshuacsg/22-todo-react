@@ -10,7 +10,7 @@ import {
 } from "./src/screens/contentscreen.js";
 import {
   DataContext,SelectedItemContext
-} from "./global.js";
+} from "./src/global.js";
 
 enableScreens();
 
